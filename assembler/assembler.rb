@@ -2,7 +2,7 @@ require 'rest-client'
 require 'nokogiri'
 
 if ARGV.length < 2
-  puts "#{__FILE__} [assembly file] [output file]"
+  puts "#{File.basename(__FILE__)} [assembly file] [output file]"
   exit
 end
 
