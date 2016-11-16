@@ -48,8 +48,10 @@ options[:iterations].times do
   begin
     response = RestClient.post(url, {assignment: 'lab4', logisim_file: logisim_file, assembly_file: assembly_file})
   rescue RestClient::Exception => error
-    puts "Unable to contact site. #{error}"
-    exit
+    sleep_time = rand(5...10)
+    puts "Unable to contact site: #{error}. Waiting for #{sleep_time}"
+    sleep sleep_time
+    next
   end
 
   # Parse HTML response
@@ -57,14 +59,25 @@ options[:iterations].times do
 
   # Look for incorrect cell color in results.
   incorrect = page.css('#content').css('.results').css('.wrong_cell')
+  # Check for timeouts
+  timeout = false
+  page.css('div#content h1').each do |h| 
+    if h.text == 'Timeout Error'
+      timeout = true
+    end
+  end
 
   # Write out assembly file if incorrect found.
-  unless incorrect.empty?
-    response_filename = @filename.gsub('.a', '.html')
-    puts "Error found. Saving assembly and html to #{@filename} and #{response_filename}"
+  if timeout
+    puts "#{@filename}: Timeout"
+  elsif incorrect.empty?
+    puts "#{@filename}: Correct"
+  else
+    puts "#{@filename}: Incorrect"
     incorrect_assembly_file = File.new(@filename, 'w')
     incorrect_assembly_file.puts(generated)
     incorrect_assembly_file.close
+    response_filename = @filename.gsub('.a', '.html')
     response_file = File.new(response_filename, 'w')
     response_file.puts(response)
     response_file.close
